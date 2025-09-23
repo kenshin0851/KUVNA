@@ -99,3 +99,21 @@ class KUVNA:
         GmLoadP2 = RefLoadP2/IncLoadP2
         print('Done.\n')
         return GmLoadP2
+    
+    def measureThru(self):
+        print('Recording...',end='')
+        (MeasThruP1, MeasThruP2) = measure2Port(vnakit, self.settings, self.ports)
+        IncThruP1 = np.array(list(MeasThruP1[5]))
+        RefThruP1 = np.array(list(MeasThruP1[4]))
+        TraThruP1 = np.array(list(MeasThruP1[1]))
+        IncThruP2 = np.array(list(MeasThruP2[2]))
+        RefThruP2 = np.array(list(MeasThruP2[1]))
+        TraThruP2 = np.array(list(MeasThruP2[4]))
+
+        TmThruP12 = np.zeros((len(IncThruP1),2,2), dtype = np.complex128)
+        TmThruP12[:,0,0] = RefThruP1/IncThruP1
+        TmThruP12[:,1,0] = TraThruP1/IncThruP1
+        TmThruP12[:,0,1] = TraThruP2/IncThruP2
+        TmThruP12[:,1,1] = RefThruP2/IncThruP2
+        print('Done')
+        return TmThruP12

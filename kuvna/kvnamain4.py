@@ -92,7 +92,7 @@ class MyWindow(QMainWindow, form_class):
         self.cbbox_format.addItem('dB')
         self.cbbox_format.addItem('linear')
         
-        self.ckbox_open_2.setEnabled(False)
+        #self.ckbox_open_2.setEnabled(False)
         
     def initSignal(self):      
         #주파수 조절
@@ -135,11 +135,19 @@ class MyWindow(QMainWindow, form_class):
         self.ckbox_s22.stateChanged.connect(self.ckboxS22Change)
 
         self.ckbox_open_1.stateChanged.connect(self.ckboxOpen1Change)
+        self.ckbox_short_1.stateChanged.connect(self.ckboxShort1Change)
+        self.ckbox_load_1.stateChanged.connect(self.ckboxLoad1Change)
+        
+        self.ckbox_open_2.stateChanged.connect(self.ckboxOpen2Change)
+        self.ckbox_short_2.stateChanged.connect(self.ckboxShort2Change)
+        self.ckbox_load_2.stateChanged.connect(self.ckboxLoad2Change)
 
+        self.ckbox_thru.stateChanged.connect(self.ckboxThruChange)
                                              
         # 콤보박스
         self.cbbox_view.currentIndexChanged.connect(self.changeViewID)
         self.cbbox_format.currentIndexChanged.connect(self.changeViewFormat)
+        self.cbbox_method.currentIndexChanged.connect(self.changeMethod)
         self.cbbox_scaleview.currentIndexChanged.connect(lambda index: print(f"Scale View 콤보박스 선택: {self.cbbox_scaleview.currentText()}"))
         self.cbbox_mkrid.currentIndexChanged.connect(lambda index: print(f"Marker ID 선택: {self.cbbox_mkrid.currentText()}"))
     
@@ -456,6 +464,10 @@ class MyWindow(QMainWindow, form_class):
     def ckboxLoad2Change(self):
         QMessageBox.information(self, "Caution", "Please connect LOAD to port 2")
         self.uvna.GmLoadtP2=self.uvna.measureLoadP2()
+        
+    def ckboxThruChange(self):
+        QMessageBox.information(self, "Caution", "Please connect THRU")
+        self.TmThruP12=self.uvna.measureThru()
         
 if __name__ == "__main__":
     app = QApplication(sys.argv)

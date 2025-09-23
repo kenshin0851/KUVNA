@@ -37,6 +37,7 @@ class KUVNA_data(KUVNA):
         self.GmOpenP2 = None
         self.GmShortP2 = None
         self.GmLoadP2 = None
+        self.TmThruP12 = None
         
         
     def calc_s(self,a1=None,b1=None,a2=None,b2=None):      
@@ -74,3 +75,6 @@ class KUVNA_data(KUVNA):
         GmOSLP2 = np.stack((self.GmOpenP2, self.GmShortP2, self.GmLoadP2), axis=1)
         return GmOSLP2
     
+    def TmThruP12(self):
+        Thru = self.TmThruP12
+        return Thru
