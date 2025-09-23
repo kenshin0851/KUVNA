@@ -31,6 +31,12 @@ class KUVNA_data(KUVNA):
         self.s21_ang = None
         self.s12_ang = None
         self.s22_ang = None
+        self.GmOpenP1 = None
+        self.GmShortP1 = None
+        self.GmLoadP1 = None
+        self.GmOpenP2 = None
+        self.GmShortP2 = None
+        self.GmLoadP2 = None
         
         
     def calc_s(self,a1=None,b1=None,a2=None,b2=None):      
@@ -60,6 +66,11 @@ class KUVNA_data(KUVNA):
         self.s22_abs_db = 10*np.log10(np.abs(self.s22))
     
     
+    def GmOSLP1(self):
+        GmOSLP1 = np.stack((self.GmOpenP1, self.GmShortP1, self.GmLoadP1), axis=1)
+        return GmOSLP1
     
-        
+    def GmOSLP2(self):
+        GmOSLP2 = np.stack((self.GmOpenP2, self.GmShortP2, self.GmLoadP2), axis=1)
+        return GmOSLP2
     
