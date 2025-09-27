@@ -16,6 +16,8 @@ from qtrangeslider import QRangeSlider
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
+from vnakit_ex.hidden import correct12Term,correct8Term,correct1Port
+
 from KUVNA_data import KUVNA_data
 
 
@@ -42,6 +44,8 @@ class MyWindow(QMainWindow, form_class):
         self.s21chkFlag = [0,0,0,0]
         self.s22chkFlag = [0,0,0,0]
         self.s12chkFlag = [0,0,0,0]
+        
+        self.calchk =[0,0,0,0,0,0,0]
 
         self.initUI()
         self.initSignal()     
@@ -50,6 +54,8 @@ class MyWindow(QMainWindow, form_class):
         self.uvna2 = KUVNA_data()
         self.portA = None
         self.portB = None
+        
+        self.method = 0
 
         
     def initUI(self):
@@ -91,6 +97,11 @@ class MyWindow(QMainWindow, form_class):
         
         self.cbbox_format.addItem('dB')
         self.cbbox_format.addItem('linear')
+        
+        self.cbbox_method.addItem('Raw')
+        self.cbbox_method.addItem('12-Term')
+        self.cbbox_method.addItem('8-Term')
+        self.cbbox_method.addItem('4-Term')
         
         #self.ckbox_open_2.setEnabled(False)
         
@@ -166,6 +177,7 @@ class MyWindow(QMainWindow, form_class):
         self.portA, self.portB =self.uvna.measure()
         self.uvna.calc_s(self.portA[2],self.portA[1],self.portA[5],self.portA[4])
         self.uvna2.calc_s(self.portB[2],self.portB[1],self.portB[5],self.portB[4])
+        
         self.dataFrag = True
         self.displayGraph()
      
@@ -420,7 +432,55 @@ class MyWindow(QMainWindow, form_class):
         self.ckbox_s12.setCheckState(self.s12chkFlag[self.viewID])
         self.displayGraph()
         
-    
+    def changeViewFormat(self,text):
+        self.viewFormat = int(text)
+        self.displayGraph()
+        
+    def changeMethod(self,text):
+        self.method =int(text)
+        if self.method == 0:
+            self.uvna.calc_s(self.portA[2],self.portA[1],self.portA[5],self.portA[4])
+            self.uvna2.calc_s(self.portB[2],self.portB[1],self.portB[5],self.portB[4])
+            self.displayGraph()
+            
+        if (self.method == 1 and self.checkckbox() == 1):
+            (fwd_terms,rev_terms) = self.uvna.get12Term(self.uvna.Gamma(self.uvna.freq_vec), self.uvna.GmOSLP1(), 
+                                                         self.uvna.GmOSLP2(), self.uvna.Thru(self.uvna.freq_vec), 
+                                                         self.uvna.TmThruP12)
+            s = correct12Term(self.uvna.s_param(self.portA[2],self.portA[1],self.portA[5],self.portA[4],
+                                                self.portB[2],self.portB[1],self.portB[5],self.portB[4]),fwd_terms,rev_terms)
+            self.uvna.s11 = s[:,0,0]
+            self.uvna.s21 = s[:,1,0]
+            self.uvna2.s12 = s[:,0,1]
+            self.uvna2.s22 = s[:,1,1]
+            self.uvna.cal()
+            self.uvna2.cal()
+            self.displayGraph()
+            
+        if (self.method == 2 and self.checkckbox() == 1):
+            (A,B,q) = self.uvna.get8term(self.uvna.Gamma(self.uvna.freq_vec), self.uvna.GmOSLP1(), 
+                                         self.uvna.GmOSLP2(), self.uvna.Thru(self.uvna.freq_vec), 
+                                         self.uvna.TmThruP12)
+            s = correct8Term(self.uvna.s_param(self.portA[2],self.portA[1],self.portA[5],self.portA[4],
+                                                self.portB[2],self.portB[1],self.portB[5],self.portB[4]),A,B,q)
+            self.uvna.s11 = s[:,0,0]
+            self.uvna.s21 = s[:,1,0]
+            self.uvna2.s12 = s[:,0,1]
+            self.uvna2.s22 = s[:,1,1]
+            self.uvna.cal()
+            self.uvna2.cal()
+            self.displayGraph()
+            
+        if (self.method == 3 and self.checkckbox() == 1):
+            err1 = self.uvna.get4term(self.uvna.Gamma(self.uvna.freq_vec), self.uvna.GmOSLP1())
+            err2 = self.uvna.get4term(self.uvna.Gamma(self.uvna.freq_vec), self.uvna.GmOSLP2())
+            
+            self.uvna.s11 = correct1Port(self.uvna.s11, err1)
+            self.uvna2.s22 = correct1Port(self.uvna2.s22, err2)
+            self.uvna.cal()
+            self.uvna2.cal()
+            self.displayGraph()
+            
     def ckboxS11Change(self,state):
         self.s11chkFlag[self.viewID] = state
         self.displayGraph()
@@ -436,38 +496,63 @@ class MyWindow(QMainWindow, form_class):
     def ckboxS12Change(self,state):
         self.s12chkFlag[self.viewID] = state
         self.displayGraph()
-        
-    def changeViewFormat(self,text):
-        self.viewFormat = int(text)
-        self.displayGraph()
-        
-    def ckboxOpen1Change(self):
-        QMessageBox.information(self, "Caution", "Please connect OPEN to port 1")
-        self.uvna.GmOpenP1=self.uvna.measureOpenP1()
-        
-    def ckboxShort1Change(self):
-        QMessageBox.information(self, "Caution", "Please connect SHORT to port 1")
-        self.uvna.GmShortP1=self.uvna.measureShortP1()
-        
-    def ckboxLoad1Change(self):
-        QMessageBox.information(self, "Caution", "Please connect LOAD to port 1")
-        self.uvna.GmLoadtP1=self.uvna.measureLoadP1()
 
-    def ckboxOpen2Change(self):
-        QMessageBox.information(self, "Caution", "Please connect OPEN to port 2")
-        self.uvna.GmOpenP2=self.uvna.measureOpenP2()
         
-    def ckboxShort2Change(self):
-        QMessageBox.information(self, "Caution", "Please connect SHORT to port 2")
-        self.uvna.GmShortP2=self.uvna.measureShortP2()
+    def ckboxOpen1Change(self,state):
+        if state ==2:
+            QMessageBox.information(self, "Caution", "Please connect OPEN to port 1")
+            self.uvna.GmOpenP1=self.uvna.measureOpenP1()
+            QMessageBox.information(self, "Done", "Done")
+        self.calchk[0] = state
         
-    def ckboxLoad2Change(self):
-        QMessageBox.information(self, "Caution", "Please connect LOAD to port 2")
-        self.uvna.GmLoadtP2=self.uvna.measureLoadP2()
+    def ckboxShort1Change(self,state):
+        if state ==2:
+            QMessageBox.information(self, "Caution", "Please connect SHORT to port 1")
+            self.uvna.GmShortP1=self.uvna.measureShortP1()
+            QMessageBox.information(self, "Done", "Done")
+        self.calchk[1] = state
         
-    def ckboxThruChange(self):
-        QMessageBox.information(self, "Caution", "Please connect THRU")
-        self.TmThruP12=self.uvna.measureThru()
+    def ckboxLoad1Change(self,state):
+        if state ==2:
+            QMessageBox.information(self, "Caution", "Please connect LOAD to port 1")
+            self.uvna.GmLoadP1=self.uvna.measureLoadP1()
+            QMessageBox.information(self, "Done", "Done")
+        self.calchk[2] = state
+
+    def ckboxOpen2Change(self,state):
+        if state ==2:
+            QMessageBox.information(self, "Caution", "Please connect OPEN to port 2")
+            self.uvna.GmOpenP2=self.uvna.measureOpenP2()
+            QMessageBox.information(self, "Done", "Done")
+        self.calchk[3] = state
+        
+    def ckboxShort2Change(self,state):
+        if state ==2:
+            QMessageBox.information(self, "Caution", "Please connect SHORT to port 2")
+            self.uvna.GmShortP2=self.uvna.measureShortP2()
+            QMessageBox.information(self, "Done", "Done")
+        self.calchk[4] = state
+        
+    def ckboxLoad2Change(self,state):
+        if state ==2:
+            QMessageBox.information(self, "Caution", "Please connect LOAD to port 2")
+            self.uvna.GmLoadP2=self.uvna.measureLoadP2()
+            QMessageBox.information(self, "Done", "Done")
+        self.calchk[5] = state
+        
+    def ckboxThruChange(self,state):
+        if state ==2:
+            QMessageBox.information(self, "Caution", "Please connect THRU")
+            self.uvna.TmThruP12=self.uvna.measureThru()
+            QMessageBox.information(self, "Done", "Done")
+        self.calchk[6] = state
+        
+    def checkckbox(self):
+        if (sum(self.calchk)==14):
+            return 1
+        else:
+            return 0
+        
         
 if __name__ == "__main__":
     app = QApplication(sys.argv)

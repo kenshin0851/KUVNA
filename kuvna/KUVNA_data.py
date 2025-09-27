@@ -6,6 +6,8 @@ Created on Sun Aug  3 15:21:27 2025
 """
 import numpy as np
 from KUVNA import KUVNA
+from vnakit_ex import getSettingsStr, loadGammaListed
+from vnakit_ex.hidden import readSnP
 
 
 class KUVNA_data(KUVNA):
@@ -38,6 +40,7 @@ class KUVNA_data(KUVNA):
         self.GmShortP2 = None
         self.GmLoadP2 = None
         self.TmThruP12 = None
+        self.sol_stds = ['stds/open.S1P','stds/short.S1P','stds/load.S1P']
         
         
     def calc_s(self,a1=None,b1=None,a2=None,b2=None):      
@@ -50,7 +53,11 @@ class KUVNA_data(KUVNA):
         self.s21 = np.array(b2)/np.array(a1)
         self.s12 = np.array(b1)/np.array(a2)
         self.s22 = np.array(b2)/np.array(a2)
-            
+        
+        self.cal()
+        
+        
+    def cal(self):
         self.s11_abs = np.abs(self.s11)
         self.s21_abs = np.abs(self.s21)
         self.s12_abs = np.abs(self.s12)
@@ -65,6 +72,14 @@ class KUVNA_data(KUVNA):
         self.s21_abs_db = 10*np.log10(np.abs(self.s21))
         self.s12_abs_db = 10*np.log10(np.abs(self.s12))
         self.s22_abs_db = 10*np.log10(np.abs(self.s22))
+        
+    def s_param(self,a1=None,b1=None,a2=None,b2=None,a12=None,b12=None,a22=None,b22=None):
+        TmThruP12 = np.zeros((len(self.s11),2,2), dtype = np.complex128)
+        TmThruP12[:,0,0] = np.array(b1)/np.array(a1)
+        TmThruP12[:,1,0] = np.array(b2)/np.array(a1)
+        TmThruP12[:,0,1] = np.array(b12)/np.array(a22)
+        TmThruP12[:,1,1] = np.array(b22)/np.array(a22)
+        return TmThruP12
     
     
     def GmOSLP1(self):
@@ -75,6 +90,10 @@ class KUVNA_data(KUVNA):
         GmOSLP2 = np.stack((self.GmOpenP2, self.GmShortP2, self.GmLoadP2), axis=1)
         return GmOSLP2
     
-    def TmThruP12(self):
-        Thru = self.TmThruP12
-        return Thru
+    def Gamma(self,freq_vec):
+        Gamma_listed = loadGammaListed(self.sol_stds,freq_vec*1e6)
+        return Gamma_listed
+    
+    def Thru(self,freq_vec):
+        Thru_listed = readSnP('stds/thru.S2P',freq_desired=freq_vec*1e6)
+        return Thru_listed

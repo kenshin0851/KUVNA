@@ -22,6 +22,8 @@ class KUVNA:
         self.ports = {'Tx1': 3, 'Rx1A': 2, 'Rx1B': 1, 'Tx2': 6, 'Rx2A': 5, 'Rx2B': 4}
         self.freq_vec = None
         self.settings = None
+        self.rec_tx1 = None
+        self.rec_tx2 = None
 
 
     def initialize(self,freq=[100,6000], NoP=236, Bandwidth=1, Power=-10):
@@ -42,15 +44,16 @@ class KUVNA:
 
     def measure(self):
         print('Recording...', end='')
-        rec_tx1, rec_tx2 = measure2Port(vnakit, self.settings, self.ports)
+        self.rec_tx1, self.rec_tx2 = measure2Port(vnakit, self.settings, self.ports)
         print('Done.\n')
-        return  rec_tx1,rec_tx2
+        return  self.rec_tx1,self.rec_tx2
+    
     
     def measureOpenP1(self):
         print('Recording...',end='')
         MeasOpenP1 = measure1Port(vnakit, self.settings, self.ports['Tx1'])
-        IncOpenP1 = np.array(list(MeasOpenP1[5]))
-        RefOpenP1 = np.array(list(MeasOpenP1[4]))
+        IncOpenP1 = np.array(list(MeasOpenP1[2]))
+        RefOpenP1 = np.array(list(MeasOpenP1[1]))
         GmOpenP1 = RefOpenP1/IncOpenP1
         print('Done.\n')
         return GmOpenP1
@@ -58,8 +61,8 @@ class KUVNA:
     def measureShortP1(self):
         print('Recording...',end='')
         MeasShortP1 = measure1Port(vnakit, self.settings, self.ports['Tx1'])
-        IncShortP1 = np.array(list(MeasShortP1[5]))
-        RefShortP1 = np.array(list(MeasShortP1[4]))
+        IncShortP1 = np.array(list(MeasShortP1[2]))
+        RefShortP1 = np.array(list(MeasShortP1[1]))
         GmShortP1 = RefShortP1/IncShortP1
         print('Done.\n')
         return GmShortP1
@@ -67,8 +70,8 @@ class KUVNA:
     def measureLoadP1(self):
         print('Recording...',end='')
         MeasLoadP1 = measure1Port(vnakit, self.settings, self.ports['Tx1'])
-        IncLoadP1 = np.array(list(MeasLoadP1[5]))
-        RefLoadP1 = np.array(list(MeasLoadP1[4]))
+        IncLoadP1 = np.array(list(MeasLoadP1[2]))
+        RefLoadP1 = np.array(list(MeasLoadP1[1]))
         GmLoadP1 = RefLoadP1/IncLoadP1
         print('Done.\n')
         return GmLoadP1
@@ -76,8 +79,8 @@ class KUVNA:
     def measureOpenP2(self):
         print('Recording...',end='')
         MeasOpenP2 = measure1Port(vnakit, self.settings, self.ports['Tx2'])
-        IncOpenP2 = np.array(list(MeasOpenP2[2]))
-        RefOpenP2 = np.array(list(MeasOpenP2[1]))
+        IncOpenP2 = np.array(list(MeasOpenP2[5]))
+        RefOpenP2 = np.array(list(MeasOpenP2[4]))
         GmOpenP2 = RefOpenP2/IncOpenP2
         print('Done.\n')
         return GmOpenP2
@@ -85,8 +88,8 @@ class KUVNA:
     def measureShortP2(self):
         print('Recording...',end='')
         MeasShortP2 = measure1Port(vnakit, self.settings, self.ports['Tx2'])
-        IncShortP2 = np.array(list(MeasShortP2[2]))
-        RefShortP2 = np.array(list(MeasShortP2[1]))
+        IncShortP2 = np.array(list(MeasShortP2[5]))
+        RefShortP2 = np.array(list(MeasShortP2[4]))
         GmShortP2 = RefShortP2/IncShortP2
         print('Done.\n')
         return GmShortP2
@@ -94,8 +97,8 @@ class KUVNA:
     def measureLoadP2(self):
         print('Recording...',end='')
         MeasLoadP2 = measure1Port(vnakit, self.settings, self.ports['Tx2'])
-        IncLoadP2 = np.array(list(MeasLoadP2[2]))
-        RefLoadP2 = np.array(list(MeasLoadP2[1]))
+        IncLoadP2 = np.array(list(MeasLoadP2[5]))
+        RefLoadP2 = np.array(list(MeasLoadP2[4]))
         GmLoadP2 = RefLoadP2/IncLoadP2
         print('Done.\n')
         return GmLoadP2
@@ -103,17 +106,30 @@ class KUVNA:
     def measureThru(self):
         print('Recording...',end='')
         (MeasThruP1, MeasThruP2) = measure2Port(vnakit, self.settings, self.ports)
-        IncThruP1 = np.array(list(MeasThruP1[5]))
-        RefThruP1 = np.array(list(MeasThruP1[4]))
-        TraThruP1 = np.array(list(MeasThruP1[1]))
-        IncThruP2 = np.array(list(MeasThruP2[2]))
-        RefThruP2 = np.array(list(MeasThruP2[1]))
-        TraThruP2 = np.array(list(MeasThruP2[4]))
+        IncThruP1 = np.array(list(MeasThruP1[2]))
+        RefThruP1 = np.array(list(MeasThruP1[1]))
+        TraThruP1 = np.array(list(MeasThruP1[4]))
+        IncThruP2 = np.array(list(MeasThruP2[5]))
+        RefThruP2 = np.array(list(MeasThruP2[4]))
+        TraThruP2 = np.array(list(MeasThruP2[1]))
 
         TmThruP12 = np.zeros((len(IncThruP1),2,2), dtype = np.complex128)
         TmThruP12[:,0,0] = RefThruP1/IncThruP1
         TmThruP12[:,1,0] = TraThruP1/IncThruP1
         TmThruP12[:,0,1] = TraThruP2/IncThruP2
         TmThruP12[:,1,1] = RefThruP2/IncThruP2
-        print('Done')
+        print('Done.\n')
         return TmThruP12
+    
+        
+    def get12Term(self,Gamma_listed,GmOSLP1,GmOSLP2,Thru_listed,TmThruP12):
+        (fwd_terms,rev_terms) = get12TermModel(Gamma_listed,GmOSLP1,Gamma_listed,GmOSLP2,Thru_listed, TmThruP12)
+        return fwd_terms,rev_terms
+    
+    def get8term(self,Gamma_listed,GmOSLP1,GmOSLP2,Thru_listed,TmThruP12):
+        (A,B,q) = get8TermModel(Gamma_listed,GmOSLP1,Gamma_listed,GmOSLP2,Thru_listed,TmThruP12)
+        return A,B,q
+    
+    def get4term(self,Gamma_listed,GmOSLP1):
+        err_terms = get1PortModel(Gamma_listed, GmOSLP1)
+        return err_terms
